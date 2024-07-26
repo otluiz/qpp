@@ -1,0 +1,38 @@
+name: GitHub actions
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the unit tests (standard OpenQASM2)
+        run: |
+          cmake -B build_qasm -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake --build build_qasm --target unit_tests --parallel 4
+
+      - name: Build the unit tests (Qiskit)
+        run: |
+          cmake -B build_qiskit -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake --build build_qiskit --target unit_tests --parallel 4
+
+      - name: Run the unit tests (standard OpenQASM2)
+        run: |
+          ctest --test-dir build_qasm
+
+      - name: Run the unit tests (Qiskit)
+        run: |
+          ctest --test-dir build_qiskit
